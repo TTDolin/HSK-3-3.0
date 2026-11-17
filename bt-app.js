@@ -41,14 +41,14 @@ const alts=a=>String(a).split('|').map(x=>x.trim()).filter(Boolean);
 const match=(v,a)=>!!norm(v)&&alts(a).some(x=>norm(x)===norm(v));
 const PNAME={mc:'',bank:'',fix:'Máy so với đáp án tham khảo – nếu em viết cách khác mà đúng, bấm “Em làm đúng”.',tr:'Máy so với đáp án tham khảo – nếu em dịch cách khác mà đúng, bấm “Em làm đúng”.',rw:'Máy so với đáp án tham khảo – có cách viết khác đúng thì bấm “Em làm đúng”.',order:'Bấm lần lượt các cụm từ để sắp xếp. Bấm “Xoá” để làm lại.',tf:'',passage:''};
 function hub(){
-  const v=$(`<div><div class="bt-hero"><h2>Bài tập bổ ngữ · 补语练习</h2><p>6 loại bổ ngữ, mỗi loại 6–7 dạng bài: trắc nghiệm, điền từ, sửa sai, sắp xếp câu, đúng/sai, đoạn văn, dịch. Làm xong bấm “Nộp bài” để chấm.</p></div><div class="bt-grid" id="g"></div></div>`);
+  const v=$(`<div><div class="bt-hero"><h2>Bài tập bổ ngữ · 补语练习</h2><p>${esc(window.BT_INTRO||'6 loại bổ ngữ, mỗi loại 6–7 dạng bài: trắc nghiệm, điền từ, sửa sai, sắp xếp câu, đúng/sai, đoạn văn, dịch. Làm xong bấm “Nộp bài” để chấm.')}</p></div><div class="bt-grid" id="g"></div></div>`);
   const g=v.querySelector('#g');
   D.forEach(sh=>{const b=ST[sh.id];const n=sh.parts.reduce((s,p)=>s+count(p),0);
-    g.append($(`<a class="bt-card" href="#bo-ngu/${sh.id}"><b>${esc(sh.title)}</b><small>${sh.parts.length} dạng bài · ${n} câu</small>${b?`<span class="bt-badge g">Cao nhất ${b}%</span>`:'<span class="bt-badge">Chưa làm</span>'}</a>`))});
+    g.append($(`<a class="bt-card" href="#bo-ngu/${sh.id}"><b>${esc(sh.title)}</b>${sh.sub?`<small class="han">${esc(sh.sub)}</small>`:''}<small>${sh.parts.length} dạng bài · ${n} câu</small>${b?`<span class="bt-badge g">Cao nhất ${b}%</span>`:'<span class="bt-badge">Chưa làm</span>'}</a>`))});
   return v}
 const count=([k,t,p])=>k==='bank'?p[1].length:k==='passage'?p[1].length:p.length;
 function sheet(id){const sh=D.find(x=>x.id===id);if(!sh)return hub();
-  const v=$(`<div><div class="kn-top" style="display:flex;gap:10px;align-items:center"><a class="btn" href="#bo-ngu">← Bài tập bổ ngữ</a></div><h2>${esc(sh.title)}</h2><div id="ps"></div>
+  const v=$(`<div><div class="kn-top" style="display:flex;gap:10px;align-items:center"><a class="btn" href="#bo-ngu">← Bài tập bổ ngữ</a></div><h2>${esc(sh.title)}</h2>${sh.sub?`<p class="sub">${esc(sh.sub)}</p>`:''}<div id="ps"></div>
     <div class="bt-bar"><button class="btn" id="sub" style="background:var(--brand);color:#fff;font-size:17px;padding:10px 22px">Nộp bài</button><button class="btn" id="re">Làm lại</button><span class="bt-score" id="sc"></span></div></div>`);
   const ps=v.querySelector('#ps');const checks=[];
   sh.parts.forEach(([k,title,pay],pi)=>{const box=$(`<div class="bt-part"><h3>Bài ${pi+1}: ${esc(title)}</h3>${PNAME[k]?`<p class="bt-note">${esc(PNAME[k])}</p>`:''}</div>`);ps.append(box);
@@ -70,9 +70,9 @@ function sheet(id){const sh=D.find(x=>x.id===id);if(!sh)return hub();
       sh2.forEach((c,j)=>{const b=$(`<button class="btn">${esc(c)}</button>`);b.onclick=()=>{if(it.dataset.done||built.includes(j))return;built.push(j);b.classList.add('used');draw()};ch.append(b)});
       it.querySelector('.bt-self').onclick=()=>{if(it.dataset.done)return;built=[];ch.querySelectorAll('button').forEach(b=>b.classList.remove('used'));draw()};
       checks.push(()=>{it.dataset.done=1;const ok=match(bd.textContent,a);it.querySelector('.bt-res').innerHTML=ok?'<span class="ok">✓ Đúng</span>':`<span class="no">✗</span> Đáp án: <span class="bt-ans">${esc(alts(a).join(' / '))}</span>`;return ok});box.append(it)});
-    if(k==='fix'||k==='tr'||k==='rw')pay.forEach(([q,a],i)=>{const it=$(`<div class="bt-it"><div class="${k==='tr'?'bt-vi':'bt-q'}"><span class="n">${i+1}.</span>${esc(q)}</div><input class="bt-in" placeholder="${k==='fix'?'Viết lại câu đúng':k==='tr'?'Viết câu tiếng Trung':'Viết câu hoàn chỉnh'}"><div class="bt-res"></div></div>`);
+    if(k==='fix'||k==='tr'||k==='rw')pay.forEach(([q,a,note],i)=>{const it=$(`<div class="bt-it"><div class="${k==='tr'?'bt-vi':'bt-q'}"><span class="n">${i+1}.</span>${esc(q)}</div><input class="bt-in" placeholder="${k==='fix'?'Viết lại câu đúng':k==='tr'?'Viết câu tiếng Trung':'Viết câu hoàn chỉnh'}"><div class="bt-res"></div></div>`);
       const st={ok:false};checks.push(()=>{const inp=it.querySelector('input');inp.disabled=true;st.ok=match(inp.value,a);const r=it.querySelector('.bt-res');
-        r.innerHTML=(st.ok?'<span class="ok">✓ Khớp đáp án</span>':'<span class="no">✗ Chưa khớp</span>')+` · Đáp án tham khảo: <span class="bt-ans">${esc(alts(a).join(' / '))}</span>`;
+        r.innerHTML=(st.ok?'<span class="ok">✓ Khớp đáp án</span>':'<span class="no">✗ Chưa khớp</span>')+` · Đáp án tham khảo: <span class="bt-ans">${esc(alts(a).join(' / '))}</span>`+(note?`<div style="color:var(--mute);margin-top:2px">💡 ${esc(note)}</div>`:'');
         if(!st.ok&&inp.value.trim()){const b=$(`<button class="btn bt-self">✓ Em làm đúng</button>`);b.onclick=()=>{st.ok=true;b.remove();r.querySelector('.no').outerHTML='<span class="ok">✓ Tự chấm đúng</span>';rescore()};r.append(b)}return st});box.append(it)});
   });
   let res=[];const sc=v.querySelector('#sc');
